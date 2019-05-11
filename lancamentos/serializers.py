@@ -24,10 +24,14 @@ class CategoriaSerializer(serializers.HyperlinkedModelSerializer):
 class JournalSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Journal
-        fields = ('data', 'conta_debito', 'conta_credito', 'valor', 'proprietario')
+        fields = ('data', 'conta_debito', 'conta_credito',
+                  'valor', 'proprietario')
 
 
 class LancamentoSerializer(serializers.HyperlinkedModelSerializer):
+    atualiza_futuros = serializers.BooleanField()
+
     class Meta:
         model = Lancamento
-        fields = ('data', 'conta_debito', 'conta_credito', 'valor', 'proprietario')
+        fields = ('journal', 'data', 'conta_debito', 'conta_credito', 'valor',
+                  'num_parcela', 'proprietario', 'atualiza_futuros')

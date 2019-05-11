@@ -95,20 +95,19 @@ class Lancamento(models.Model):
         (CREDITO, 'Crédito'),
         (TRANSFERENCIA, 'Transferência'),
     )
-    tipo = models.CharField(
-        max_length=3, choices=TIPO_CHOICES, default=DEBITO)
+    journal = models.ForeignKey(
+        'lancamentos.Journal', on_delete=models.CASCADE)
     data = models.DateField()
     conta_debito = models.ForeignKey(
         Conta, related_name='debitos', on_delete=models.CASCADE)
     conta_credito = models.ForeignKey(
         Conta, related_name='creditos', on_delete=models.CASCADE)
     valor = models.DecimalField(max_digits=9, decimal_places=2)
+    num_parcela = models.IntegerField()
     proprietario = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
     )
-    journal = models.ForeignKey('lancamentos.Journal', on_delete=models.CASCADE)
-    num_parcela = models.IntegerField()
     objects = ProprietarioManager()
 
     def categoria(self):
