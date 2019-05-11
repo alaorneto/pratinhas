@@ -44,12 +44,28 @@ class Journal(models.Model):
         (CREDITO, 'Crédito'),
         (TRANSFERENCIA, 'Transferência'),
     )
+    UNICO = 'UNI'
+    SEMANAL = 'SEM'
+    MENSAL = 'MES'
+    ANUAL = 'ANO'
+    PERIODICIDADE_CHOICES = (
+        (UNICO, 'Único'),
+        (SEMANAL, 'Semanal'),
+        (MENSAL, 'Mensal'),
+        (ANUAL, 'Anual'),
+    )
     tipo = models.CharField(
         max_length=3, choices=TIPO_CHOICES, default=DEBITO)
     data = models.DateField()
     conta_debito = models.ForeignKey(Conta, related_name='journal_debitos', on_delete=models.CASCADE)
     conta_credito = models.ForeignKey(Conta, related_name='journal_creditos', on_delete=models.CASCADE)
     valor = models.DecimalField(max_digits=9, decimal_places=2)
+    periodicidade = models.CharField(
+        max_length=3, choices=PERIODICIDADE_CHOICES, default=UNICO
+    )
+    tempo_indeterminado = models.BooleanField()
+    qtde_parcelas = models.IntegerField()
+    ultima_atualizacao = models.DateTimeField()
     proprietario = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
@@ -92,7 +108,7 @@ class Lancamento(models.Model):
         on_delete=models.CASCADE,
     )
     journal = models.ForeignKey('lancamentos.Journal', on_delete=models.CASCADE)
-
+    num_parcela = models.IntegerField()
     objects = ProprietarioManager()
 
     def categoria(self):
