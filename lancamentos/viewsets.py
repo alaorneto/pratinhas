@@ -26,21 +26,3 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         usuario = self.request.user
         return Conta.objects.proprietario(usuario).filter(conta_categoria=True)
-
-
-class JournalViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = JournalSerializer
-    
-    def get_queryset(self):
-        usuario = self.request.user
-        return Journal.objects.proprietario(usuario)
-
-
-class LancamentoViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = JournalSerializer
-
-    def get_queryset(self):
-        usuario = self.request.user
-        return Lancamento.objects.proprietario(usuario)

@@ -36,6 +36,16 @@ class Conta(models.Model):
 class Journal(models.Model):
     """ O journal tem a função de agrupar lançamentos que se repetem no tempo,
     guardando as características gerais desses itens. """
+    DEBITO = 'DBT'
+    CREDITO = 'CRD'
+    TRANSFERENCIA = 'TRF'
+    TIPO_CHOICES = (
+        (DEBITO, 'Débito'),
+        (CREDITO, 'Crédito'),
+        (TRANSFERENCIA, 'Transferência'),
+    )
+    tipo = models.CharField(
+        max_length=3, choices=TIPO_CHOICES, default=DEBITO)
     data = models.DateField()
     conta_debito = models.ForeignKey(Conta, related_name='journal_debitos', on_delete=models.CASCADE)
     conta_credito = models.ForeignKey(Conta, related_name='journal_creditos', on_delete=models.CASCADE)
@@ -45,6 +55,15 @@ class Journal(models.Model):
         on_delete=models.CASCADE,
     )
     objects = ProprietarioManager()
+
+    def categoria(self):
+        if self.tipo == DEBITO:
+            return conta_credito
+        elif self.tipo == CREDITO:
+            return conta_debito
+        else:
+            return None
+
     class Meta:
         verbose_name = "journal"
         verbose_name_plural = "journals"
@@ -52,6 +71,16 @@ class Journal(models.Model):
 
 class Lancamento(models.Model):
     """ É o nível mais atômico, representando um débito ou crédito em uma determiada conta. """
+    DEBITO = 'DBT'
+    CREDITO = 'CRD'
+    TRANSFERENCIA = 'TRF'
+    TIPO_CHOICES = (
+        (DEBITO, 'Débito'),
+        (CREDITO, 'Crédito'),
+        (TRANSFERENCIA, 'Transferência'),
+    )
+    tipo = models.CharField(
+        max_length=3, choices=TIPO_CHOICES, default=DEBITO)
     data = models.DateField()
     conta_debito = models.ForeignKey(
         Conta, related_name='debitos', on_delete=models.CASCADE)
@@ -62,7 +91,18 @@ class Lancamento(models.Model):
         get_user_model(),
         on_delete=models.CASCADE,
     )
+    journal = models.ForeignKey('lancamentos.Journal', on_delete=models.CASCADE)
+
     objects = ProprietarioManager()
+
+    def categoria(self):
+        if self.tipo == DEBITO:
+            return conta_credito
+        elif self.tipo == CREDITO:
+            return conta_debito
+        else:
+            return None
+
     class Meta:
         verbose_name = "lançamento"
         verbose_name_plural = "lançamentos"
