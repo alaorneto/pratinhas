@@ -1,10 +1,14 @@
-from django.urls import path
-from lancamentos import views
-from .views import ExtratoView, ContasList, ContaView
+from django.urls import path, include
+from rest_framework import routers
+from .views import UserViewSet, ContaViewSet, CategoriaViewSet
+
+
+# Routers provide an easy way of automatically determining the URL conf.
+router = routers.DefaultRouter()
+router.register('usuarios', UserViewSet)
+router.register('contas', ContaViewSet, basename='conta')
+router.register('categorias', CategoriaViewSet, basename='categoria')
 
 urlpatterns = [
-    path('', views.index),
-    path('contas/', ContasList.as_view()),
-    path('conta/<int:conta_id>/', ContaView.as_view()),
-    path('extrato/', ExtratoView.as_view())
+    path('', include(router.urls)),
 ]
