@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .models import Conta, Journal, Lancamento
-from .services import cria_lancamentos, atualiza_journals
+from .services import criar_lancamentos, atualizar_journals, excluir_journal
 
 def index(request):
     """ Exibe o painel inicial da aplicação. """
@@ -22,21 +22,25 @@ class ExtratoView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, mes, ano):
-        cria_lancamentos(request.user, mes, ano)
+        criar_lancamentos(request.user, mes, ano)
         return Response()
 
 
 class LancamentoView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get(self):
+    def get(self, request, pk):
         pass
     
-    def post(self):
+    def post(self, request):
         pass
     
-    def put(self):
+    def put(self, request, pk):
         pass
     
-    def delete(self):
+    def delete(self, request, pk):
+        lancamento = Lancamento.objects.proprietario(request.user).get_object_or_404(pk=pk)
+        journal = lancamento.journal
+        lancamento.delete()
+        excluir_journal(journal)
         pass

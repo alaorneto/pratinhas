@@ -1,11 +1,11 @@
 from .models import Conta, Journal, Lancamento
 
 
-def cria_lancamentos(usuario, mes, ano):
+def criar_lancamentos(usuario, mes, ano):
     pass
 
 
-def atualiza_journals():
+def atualizar_journals():
     pass
 
 
