@@ -1,16 +1,15 @@
 from django.conf.urls import url
 from django.urls import path, include
 from rest_framework import routers
-from .viewsets import UsuarioViewSet, ContaViewSet, CategoriaViewSet
-from .views import ExtratoView, LancamentoView
+from .views import ExtratoView, LancamentoView, UsuarioViewSet, ContaViewSet, CategoriaViewSet
 
 router = routers.DefaultRouter()
 router.register('usuarios', UsuarioViewSet)
 router.register('contas', ContaViewSet, basename='conta')
 router.register('categorias', CategoriaViewSet, basename='categoria')
+router.register('lancamentos', LancamentoView, basename='lancamento')
 
 urlpatterns = [
-    url('', include(router.urls)),
     path('extrato/<int:mes>/<int:ano>/', ExtratoView.as_view()),
-    path('lancamento/<int:pk>/', LancamentoView.as_view()),
+    url('', include(router.urls)),
 ]
