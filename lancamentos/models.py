@@ -15,8 +15,8 @@ class ProprietarioManager(models.Manager):
 
 class Conta(models.Model):
     """ Contas agrupam lançamentos e mantêm um saldo corrente. """
-    data_inicial = models.DateField()
-    saldo_inicial = models.DecimalField(max_digits=9, decimal_places=2)
+    data_inicial = models.DateField(null=True)
+    saldo_inicial = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     nome = models.CharField(max_length=100)
     conta_categoria = models.BooleanField()
     proprietario = models.ForeignKey(
@@ -31,6 +31,7 @@ class Conta(models.Model):
     class Meta:
         verbose_name = "conta"
         verbose_name_plural = "contas"
+        unique_together = ['nome', 'proprietario']
 
 
 class Journal(models.Model):

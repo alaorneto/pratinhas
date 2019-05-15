@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.http import JsonResponse
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import authentication, permissions
@@ -11,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .models import Conta, Journal, Lancamento
+from .serializers import JournalSerializer, LancamentoSerializer, ContaSerializer, CategoriaSerializer, UsuarioSerializer
 from .services import criar_lancamentos, atualizar_journals, excluir_journal
 
 
@@ -19,30 +21,71 @@ def index(request):
     return render(request, "lancamentos/extrato.html")
 
 
+class UsuarioViewSet(ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UsuarioSerializer
+
+
+class ContaViewSet(ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ContaSerializer
+
+    def get_queryset(self):
+        return Conta.objects.proprietario(self.request.user).filter(conta_categoria=False)
+
+
+class CategoriaViewSet(ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = CategoriaSerializer
+
+    def get_queryset(self):
+        return Conta.objects.proprietario(self.request.user).filter(conta_categoria=True)
+
+
 class ExtratoView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get(self, request, mes, ano):
+    def list(self, request, mes, ano):
         criar_lancamentos(request.user, mes, ano)
         return Response()
 
 
-class LancamentoView(APIView):
+class LancamentoView(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get(self, request, pk):
-        pass
+    def list(self, request):
+        serializer = LancamentoSerializer(get_queryset(), many=True)
+        return Response(serializer.data)
 
-    def post(self, request):
-        pass
+    def create(self, request):
+        data = request.data
+        data['proprietario'] = request.user
+        serializer = JournalSerializer(data)
+        if serializer.is_valid():
+            journal = serializer.save()
+        raise NotImplemented()
+        return Response(journal)
 
-    def put(self, request, pk):
-        pass
-
-    def delete(self, request, pk):
-        lancamento = Lancamento.objects.proprietario(
-            request.user).get_object_or_404(pk=pk)
+    def retrieve(self, request, pk):
+        lancamento = get_object_or_404(get_queryset(), pk)
+        serializer = LancamentoSerializer(lancamento)
+        return Response(serializer.data)
+    
+    def update(self, request, pk):
+        raise NotImplemented()
+    
+    def destroy(self, request, pk):
+        lancamento = Lancamento.objects.proprietario(request.user).get_object_or_404(pk=pk)
         journal = lancamento.journal
         lancamento.delete()
         excluir_journal(journal)
-        pass
+        raise NotImplemented()
+    
+    def get_queryset(self):
+        return Lancamento.objects.proprietario(self.request.user)
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return JournalSerializer
+        else:
+            return LancamentoSerializer
