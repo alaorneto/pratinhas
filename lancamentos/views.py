@@ -13,9 +13,10 @@ from django.contrib.auth.decorators import login_required
 from .models import Conta, Journal, Lancamento
 from .services import criar_lancamentos, atualizar_journals, excluir_journal
 
+
 def index(request):
     """ Exibe o painel inicial da aplicação. """
-    return render(request, "lancamentos/painel.html")
+    return render(request, "lancamentos/extrato.html")
 
 
 class ExtratoView(APIView):
@@ -31,15 +32,16 @@ class LancamentoView(APIView):
 
     def get(self, request, pk):
         pass
-    
+
     def post(self, request):
         pass
-    
+
     def put(self, request, pk):
         pass
-    
+
     def delete(self, request, pk):
-        lancamento = Lancamento.objects.proprietario(request.user).get_object_or_404(pk=pk)
+        lancamento = Lancamento.objects.proprietario(
+            request.user).get_object_or_404(pk=pk)
         journal = lancamento.journal
         lancamento.delete()
         excluir_journal(journal)
