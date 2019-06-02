@@ -82,8 +82,12 @@ class Journal(models.Model):
         else:
             return None
 
+    def preparar(self):
+        pass
 
     def atualizar(self, data_atualizacao):
+        if self.tempo_indeterminado is not True:
+            return
         if not isinstance(data_atualizacao, datetime.datetime):
             raise TypeError("Espera-se uma data alvo, do tipo datetime, como argumento para atualização do journal.")
 
@@ -110,7 +114,7 @@ class Journal(models.Model):
         elif journal.periodicidade == "ANO":
             return relativedelta.relativedelta(years=+delta)
         else:
-            return return relativedelta.relativedelta(days=0)
+            return relativedelta.relativedelta(days=0)
 
 
     class Meta:
