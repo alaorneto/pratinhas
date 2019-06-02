@@ -1,13 +1,50 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang=”en”>
+<html>
 <head>
-    <meta charset=”utf-8">
     <title>Pratinhas</title>
-    <meta name=”viewport” content=”width=device-width, initial-scale=1.0">
-
+    <link href="{% static 'css/bulma.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/site.css' %}" rel="stylesheet" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head> 
 <body>
+    <div class="container">
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/">
+                    <img src="{% static 'img/pratinhas.svg' %}">
+                </a>
+
+                <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+        <div id="navbarBasicExample" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item">Painel</a>
+                <a class="navbar-item">Extrato</a>
+            </div>
+
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <a class="button is-primary"><strong>Registrar-se</strong></a>
+                        <a class="button is-light">Entrar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+
+    {% block content %}
+    {% endblock %}
+    </div>
     
+    {% block scripts %}
+    {% endblock %}
 </body>
 </html>
+

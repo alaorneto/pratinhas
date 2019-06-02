@@ -18,7 +18,7 @@ from .services import criar_lancamentos, atualizar_journals, excluir_journal
 
 def index(request):
     """ Exibe o painel inicial da aplicação. """
-    return render(request, "lancamentos/painel.html")
+    return render(request, "lancamentos/extrato.html")
 
 
 class UsuarioViewSet(ModelViewSet):

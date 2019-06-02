@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div id="extrato">
+    <div id="tabela_lancamentos" class="table" v-if="dados">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Categoria</th>
+                    <th>Histórico</th>
+                    <th>Valor</th>
+                    <th>Saldo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+    <div class="modal is-active" v-if="!dados">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <div class="box">
+                Olá
+            </div>
+        </div>
+        <button class="modal-close is-large" aria-label="close" v-on:click="atualiza_extrato"></button>
+    </div>
+
+
+
+    <button class="button" v-on:click="atualiza_extrato">Atualizar extrato</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/site/extrato.js' %}"></script>
+{% endblock %}
