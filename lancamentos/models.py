@@ -3,7 +3,8 @@ Modelos relacionados aos lançamentos (débitos e créditos).
 """
 from django.db import models
 from django.contrib.auth import get_user_model
-
+import datetime
+from dateutil import relativedelta
 
 class ProprietarioManager(models.Manager):
     """ Manager destinado a prover o filtro de entidades por proprietário. """
@@ -80,6 +81,37 @@ class Journal(models.Model):
             return conta_debito
         else:
             return None
+
+
+    def atualizar(self, data_atualizacao):
+        if not isinstance(data_atualizacao, datetime.datetime):
+            raise TypeError("Espera-se uma data alvo, do tipo datetime, como argumento para atualização do journal.")
+
+        data_inicial = self.ultima_atualizacao
+        data_lancamento = self.data
+        delta_count = 0
+
+        while data_lancamento <= self.data_atualizacao:
+            if data_lancamento <= data_inicial:
+                continue
+            lancamento = criar_lancamento(journal, data_lancamento)
+            lancamento.save()
+            self.ultima_atualizacao = data_lancamento
+            self.save()
+            delta_count += 1
+            data_lancamento += self.data + __obter_delta(self, delta_count)
+
+
+    def __obter_delta(self, journal, delta=1):
+        if journal.periodicidade == "SEM":
+            return relativedelta.relativedelta(weeks=+delta)
+        elif journal.periodicidade == "MES":
+            return relativedelta.relativedelta(months=+delta)
+        elif journal.periodicidade == "ANO":
+            return relativedelta.relativedelta(years=+delta)
+        else:
+            return return relativedelta.relativedelta(days=0)
+
 
     class Meta:
         verbose_name = "journal"

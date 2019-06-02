@@ -17,7 +17,17 @@ from .services import criar_lancamentos, atualizar_journals, excluir_journal
 
 
 def index(request):
-    """ Exibe o painel inicial da aplicação. """
+    """ Exibe a página inicial da aplicação. """
+    return render(request, "lancamentos/index.html")
+
+
+def painel(request):
+    """ Exibe o painel do usuário. """
+    return render(request, "lancamentos/painel.html")
+
+
+def extrato(request):
+    """ Exibe o extrato do usuário. """
     return render(request, "lancamentos/extrato.html")
 
 
@@ -63,7 +73,6 @@ class LancamentoView(ModelViewSet):
         serializer = JournalSerializer(data)
         if serializer.is_valid():
             journal = serializer.save()
-        raise NotImplemented()
         return Response(journal)
 
     def retrieve(self, request, pk):
@@ -78,6 +87,7 @@ class LancamentoView(ModelViewSet):
         lancamento = Lancamento.objects.proprietario(request.user).get_object_or_404(pk=pk)
         journal = lancamento.journal
         lancamento.delete()
+        # verificar se foi selecionada a opção para excluir futuros
         excluir_journal(journal)
         raise NotImplemented()
     
@@ -85,6 +95,11 @@ class LancamentoView(ModelViewSet):
         return Lancamento.objects.proprietario(self.request.user)
     
     def get_serializer_class(self):
+        """ 
+        Define o serializer adequado dependendo da ação. 
+        Em caso de criação de um novo lançamento, deve-se utilizar o serializer de Journals.
+        Para as demais ações, é usado o serializer Lançamento.
+        """
         if self.action == 'create':
             return JournalSerializer
         else:
