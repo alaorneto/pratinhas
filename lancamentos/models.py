@@ -1,10 +1,11 @@
 """
 Modelos relacionados aos lançamentos (débitos e créditos).
 """
-from django.db import models
-from django.contrib.auth import get_user_model
 import datetime
 from dateutil import relativedelta
+from django.db import models
+from django.contrib.auth import get_user_model
+
 
 class ProprietarioManager(models.Manager):
     """ Manager destinado a prover o filtro de entidades por proprietário. """
@@ -28,7 +29,7 @@ class Conta(models.Model):
 
     def __str__(self):
         return self.nome
-        
+
     class Meta:
         verbose_name = "conta"
         verbose_name_plural = "contas"
@@ -59,8 +60,10 @@ class Journal(models.Model):
     tipo = models.CharField(
         max_length=3, choices=TIPO_CHOICES, default=DEBITO)
     data = models.DateField()
-    conta_debito = models.ForeignKey(Conta, related_name='journal_debitos', on_delete=models.CASCADE)
-    conta_credito = models.ForeignKey(Conta, related_name='journal_creditos', on_delete=models.CASCADE)
+    conta_debito = models.ForeignKey(Conta, related_name='journal_debitos',
+                                     on_delete=models.CASCADE)
+    conta_credito = models.ForeignKey(Conta, related_name='journal_creditos',
+                                      on_delete=models.CASCADE)
     valor = models.DecimalField(max_digits=9, decimal_places=2)
     periodicidade = models.CharField(
         max_length=3, choices=PERIODICIDADE_CHOICES, default=UNICO
@@ -75,10 +78,11 @@ class Journal(models.Model):
     objects = ProprietarioManager()
 
     def categoria(self):
-        if self.tipo == DEBITO:
-            return conta_credito
-        elif self.tipo == CREDITO:
-            return conta_debito
+        """ Retorna a conta correspondente a categoria do lançamento. """
+        if self.tipo == self.DEBITO:
+            return self.conta_credito
+        elif self.tipo == self.CREDITO:
+            return self.conta_debito
         else:
             return None
 
@@ -86,27 +90,32 @@ class Journal(models.Model):
         pass
 
     def atualizar(self, data_atualizacao):
+        """ Cria os lançamentos de um journal até determinada data. """
         if self.tempo_indeterminado is not True:
             return
         if not isinstance(data_atualizacao, datetime.datetime):
-            raise TypeError("Espera-se uma data alvo, do tipo datetime, como argumento para atualização do journal.")
+            raise TypeError("Espera-se uma data alvo, do tipo datetime, " +
+                            "como argumento para atualização do journal.")
 
         data_inicial = self.ultima_atualizacao
         data_lancamento = self.data
         delta_count = 0
 
-        while data_lancamento <= self.data_atualizacao:
+        while data_lancamento <= self.ultima_atualizacao:
             if data_lancamento <= data_inicial:
                 continue
-            lancamento = criar_lancamento(journal, data_lancamento)
+            lancamento = self.criar_lancamento(self, data_lancamento)
             lancamento.save()
             self.ultima_atualizacao = data_lancamento
             self.save()
             delta_count += 1
-            data_lancamento += self.data + __obter_delta(self, delta_count)
+            data_lancamento += self.data + self._obter_delta(self, delta_count)
 
+    def criar_lancamento(self, journal, data_lancamento):
+        raise NotImplementedError
+        return Lancamento()
 
-    def __obter_delta(self, journal, delta=1):
+    def _obter_delta(self, journal, delta=1):
         if journal.periodicidade == "SEM":
             return relativedelta.relativedelta(weeks=+delta)
         elif journal.periodicidade == "MES":
@@ -148,12 +157,8 @@ class Lancamento(models.Model):
     objects = ProprietarioManager()
 
     def categoria(self):
-        if self.tipo == DEBITO:
-            return conta_credito
-        elif self.tipo == CREDITO:
-            return conta_debito
-        else:
-            return None
+        """ Retorna a categoria do lançamento. """
+        return self.journal.categoria()
 
     class Meta:
         verbose_name = "lançamento"
