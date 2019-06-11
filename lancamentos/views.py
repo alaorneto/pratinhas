@@ -32,6 +32,7 @@ def extrato(request):
 
 
 class UsuarioViewSet(ModelViewSet):
+    permission_classes = (IsAuthenticated,)
     queryset = User.objects.all()
     serializer_class = UsuarioSerializer
 

@@ -69,6 +69,7 @@ class Journal(models.Model):
         max_length=3, choices=PERIODICIDADE_CHOICES, default=UNICO
     )
     tempo_indeterminado = models.BooleanField()
+    parcela_inicial = models.IntegerField()
     qtde_parcelas = models.IntegerField()
     ultima_atualizacao = models.DateTimeField()
     proprietario = models.ForeignKey(
@@ -86,13 +87,36 @@ class Journal(models.Model):
         else:
             return None
 
-    def preparar(self):
-        pass
+    def inicializar(self):
+        """ Cria os lançamentos de um determinado journal. """
+        if self.ultima_atualizacao:
+            raise Exception("O journal já foi inicializado anteriormente.")
+
+        # O journal possui repetição de lançamentos (periodicidade)
+        if self.tempo_indeterminado is not False and self.periodicidade != Journal.UNICO:
+            num_parcela = self.parcela_inicial
+            data_lancamento = self.data
+            while num_parcela <= self.qtde_parcelas:
+                lancamento = self.criar_lancamento(data_lancamento, num_parcela)
+                lancamento.save()
+                num_parcela += 1
+                data_lancamento = data_lancamento + self._obter_delta(
+                    num_parcela - self.parcela_inicial)
+
+        # O journal possui apenas um lançamento (único)
+        if self.tempo_indeterminado is not False and self.periodicidade == Journal.UNICO:
+            lancamento = self.criar_lancamento(self.data)
+            lancamento.save()
+
+        self.ultima_atualizacao = datetime.datetime.now()
+        self.save()
 
     def atualizar(self, data_atualizacao):
         """ Cria os lançamentos de um journal até determinada data. """
         if self.tempo_indeterminado is not True:
             return
+        if self.pk is None:
+            raise Exception("O journal precisa estar salvo para ser atualizado.")
         if not isinstance(data_atualizacao, datetime.datetime):
             raise TypeError("Espera-se uma data alvo, do tipo datetime, " +
                             "como argumento para atualização do journal.")
@@ -102,29 +126,35 @@ class Journal(models.Model):
         delta_count = 0
 
         while data_lancamento <= self.ultima_atualizacao:
+            delta_count += 1
+            data_lancamento += self.data + self._obter_delta(delta_count)
             if data_lancamento <= data_inicial:
                 continue
-            lancamento = self.criar_lancamento(self, data_lancamento)
+            lancamento = self.criar_lancamento(data_lancamento)
             lancamento.save()
             self.ultima_atualizacao = data_lancamento
             self.save()
-            delta_count += 1
-            data_lancamento += self.data + self._obter_delta(self, delta_count)
 
-    def criar_lancamento(self, journal, data_lancamento):
-        raise NotImplementedError
-        return Lancamento()
+    def criar_lancamento(self, data_lancamento, num_parcela=0):
+        """ Cria um lançamento baseado nos dados de um journal. """
+        lancamento = Lancamento(journal=self,
+                                data=data_lancamento,
+                                conta_debito=self.conta_debito,
+                                conta_credito=self.conta_credito,
+                                valor=self.valor,
+                                num_parcela=num_parcela,
+                                proprietario=self.proprietario)
+        return lancamento
 
-    def _obter_delta(self, journal, delta=1):
-        if journal.periodicidade == "SEM":
+    def _obter_delta(self, delta=1):
+        if self.periodicidade == "SEM":
             return relativedelta.relativedelta(weeks=+delta)
-        elif journal.periodicidade == "MES":
+        elif self.periodicidade == "MES":
             return relativedelta.relativedelta(months=+delta)
-        elif journal.periodicidade == "ANO":
+        elif self.periodicidade == "ANO":
             return relativedelta.relativedelta(years=+delta)
         else:
             return relativedelta.relativedelta(days=0)
-
 
     class Meta:
         verbose_name = "journal"
@@ -132,7 +162,8 @@ class Journal(models.Model):
 
 
 class Lancamento(models.Model):
-    """ É o nível mais atômico, representando um débito ou crédito em uma determiada conta. """
+    """ É o nível mais atômico, representando um débito, crédito
+    ou uma transferência entre contas. """
     DEBITO = 'DBT'
     CREDITO = 'CRD'
     TRANSFERENCIA = 'TRF'
