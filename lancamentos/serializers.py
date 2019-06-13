@@ -1,3 +1,4 @@
+""" Serializers do módulo de lançamentos. """
 import numbers
 from django.contrib.auth.models import User
 from .models import Conta, Journal, Lancamento
@@ -16,7 +17,7 @@ class ContaSerializer(serializers.ModelSerializer):
             if not data['data_inicial']:
                 raise serializers.ValidationError("É necessário indicar a data inicial da conta.")
         else:
-                raise serializers.ValidationError("É necessário indicar a data inicial da conta.")
+            raise serializers.ValidationError("É necessário indicar a data inicial da conta.")
         if 'saldo_inicial' in data:
             if not isinstance(data['saldo_inicial'], numbers.Number):
                 raise serializers.ValidationError("É necessário indicar o saldo inicial da conta.")
@@ -55,15 +56,9 @@ class CategoriaSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class JournalSerializer(serializers.HyperlinkedModelSerializer):
-    def create(self, validated_data):
-        journal = Journal.objects.proprietario()
-
-    def validate(self, data):
-        return data
-
     class Meta:
         model = Journal
-        fields = ('tipo', 'data', 'conta_debito', 'conta_credito',
+        fields = ('pk', 'tipo', 'data', 'conta_debito', 'conta_credito',
                   'valor', 'periodicidade', 'tempo_indeterminado',
                   'qtde_parcelas', 'ultima_atualizacao', 'proprietario')
 
