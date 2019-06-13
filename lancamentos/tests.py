@@ -1,23 +1,29 @@
+""" Testes do módulo lançamentos. """
+from datetime import datetime
 from django.contrib.auth.models import User
-from rest_framework.test import APITestCase, APIClient
+from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.test import APITestCase, APIClient
 
 class ContaTestCase(APITestCase):
-    client = APIClient()
+    client = None
     user = None
-    token = None
+    username = 'test'
+    email = 'test@pratinhas.app'
+    password = 'Test1234!'
 
     def setUp(self):
-        self.user = User.objects.create_user('test', 'test@pratinhas.app', 'Test1234!')
-        self.token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
-
-    def test_login(self):
-        self.assertTrue(self.client.login(username='test', password='Test1234!'))
-
-    def test_token(self):
-        response = self.client.get('/api/core/usuarios/')
-        self.assertEqual(response.status_code, 200)
+        self.client = APIClient()
+        self.user = User.objects.create_user(self.username, self.email, self.password)
+        token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
 
     def test_criar_conta(self):
-        pass
+        conta = {
+            "data_inicial": datetime.now().date(),
+            "saldo_inicial": 0.0,
+            "nome": "Banco do Brasil",
+        }
+        response = self.client.post("/api/core/contas/", conta, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        print(response.json())

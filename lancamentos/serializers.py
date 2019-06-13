@@ -1,3 +1,4 @@
+import numbers
 from django.contrib.auth.models import User
 from .models import Conta, Journal, Lancamento
 from rest_framework import serializers
@@ -9,7 +10,7 @@ class UsuarioSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('username', 'email', 'is_staff')
 
 
-class ContaSerializer(serializers.HyperlinkedModelSerializer):
+class ContaSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if 'data_inicial' in data:
             if not data['data_inicial']:
@@ -17,7 +18,7 @@ class ContaSerializer(serializers.HyperlinkedModelSerializer):
         else:
                 raise serializers.ValidationError("É necessário indicar a data inicial da conta.")
         if 'saldo_inicial' in data:
-            if not data['saldo_inicial']:
+            if not isinstance(data['saldo_inicial'], numbers.Number):
                 raise serializers.ValidationError("É necessário indicar o saldo inicial da conta.")
         else:
             raise serializers.ValidationError("É necessário indicar o saldo inicial da conta.")
@@ -31,7 +32,7 @@ class ContaSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Conta
-        fields = ('data_inicial', 'saldo_inicial', 'nome', 'proprietario')
+        fields = ('pk', 'data_inicial', 'saldo_inicial', 'nome', 'proprietario')
 
 
 class CategoriaSerializer(serializers.HyperlinkedModelSerializer):

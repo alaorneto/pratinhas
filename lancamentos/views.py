@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.http import JsonResponse
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.response import Response
@@ -40,6 +41,15 @@ class UsuarioViewSet(ModelViewSet):
 class ContaViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = ContaSerializer
+
+    def create(self, request):
+        data = request.data
+        data['proprietario'] = request.user.pk
+        serializer = ContaSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         return Conta.objects.proprietario(self.request.user).filter(conta_categoria=False)
@@ -80,9 +90,6 @@ class LancamentoView(ModelViewSet):
         lancamento = get_object_or_404(get_queryset(), pk)
         serializer = LancamentoSerializer(lancamento)
         return Response(serializer.data)
-    
-    def update(self, request, pk):
-        raise NotImplemented()
     
     def destroy(self, request, pk):
         lancamento = Lancamento.objects.proprietario(request.user).get_object_or_404(pk=pk)
