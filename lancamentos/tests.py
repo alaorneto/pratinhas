@@ -1,5 +1,6 @@
 """ Testes do módulo lançamentos. """
 from datetime import datetime
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from lancamentos.models import Conta, Journal, Lancamento
 from rest_framework import status
@@ -102,7 +103,7 @@ class CategoriaTestCase(APITestCase):
 
         self.assertEqual(Conta.objects.proprietario(self.user).filter(conta_categoria=True).count(), 2)
 
-class JournalTestCase(APITestCase):
+class LancamentoTestCase(APITestCase):
     """ Testes de operações com contas. """
     client = None
     user = None
@@ -207,3 +208,29 @@ class JournalTestCase(APITestCase):
         for journal in journals:
             journal.atualizar(datetime(2021,5,31).date())
         self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 17)
+    
+    def test_alterar_valor_lancamento(self):
+        pass
+    
+    def test_alterar_valor_lancamento_e_futuros(self):
+        pass
+    
+    def test_excluir_lancamento_unico(self):
+        conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime.now().date(),
+            "conta_debito": conta.pk,
+            "conta_credito": categoria.pk,
+            "valor": 1012.21,
+            "periodicidade": Journal.UNICO,
+            "tempo_indeterminado": False,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), valor=1012.21)
+        self.assertEqual(Lancamento.objects.proprietario(self.user).filter(valor=1012.21).count(), 1)
+        print(lancamento.pk)
+        response = self.client.delete(f"/api/core/lancamentos/{lancamento.pk}/")
+        
+        self.assertEqual(Lancamento.objects.proprietario(self.user).filter(valor=1012.21).count(), 0)
