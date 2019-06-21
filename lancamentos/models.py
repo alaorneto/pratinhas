@@ -1,6 +1,7 @@
 """
 Modelos relacionados aos lançamentos (débitos e créditos).
 """
+import datetime
 from dateutil import relativedelta
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -71,7 +72,7 @@ class Journal(models.Model):
     tempo_indeterminado = models.BooleanField()
     parcela_inicial = models.IntegerField(null=True)
     qtde_parcelas = models.IntegerField(null=True)
-    ultima_atualizacao = models.DateTimeField(null=True)
+    ultima_atualizacao = models.DateField(null=True)
     proprietario = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
@@ -93,6 +94,8 @@ class Journal(models.Model):
         if self.ultima_atualizacao:
             raise Exception("O journal já foi inicializado anteriormente.")
         
+        data_atualizacao = datetime.datetime.now().date()
+
         # O journal possui repetição de lançamentos (periodicidade)
         if self.tempo_indeterminado is False and self.periodicidade != Journal.UNICO:
             num_parcela = self.parcela_inicial
@@ -101,27 +104,27 @@ class Journal(models.Model):
                 lancamento = self.criar_lancamento(data_lancamento, num_parcela)
                 lancamento.save()
                 num_parcela += 1
-                data_lancamento = data_lancamento + self._obter_delta(
+                data_lancamento = self.data + self._obter_delta(
                     num_parcela - self.parcela_inicial)
+            data_atualizacao = data_lancamento
+                
 
         # O journal possui apenas um lançamento (único)
-        if self.tempo_indeterminado is False and self.periodicidade == Journal.UNICO:
+        if (self.tempo_indeterminado is False and self.periodicidade == Journal.UNICO) or (self.tempo_indeterminado):
             lancamento = self.criar_lancamento(self.data)
             lancamento.save()
+            data_atualizacao = self.data
 
-        if self.tempo_indeterminado:
-            raise NotImplementedError
-
-        self.ultima_atualizacao = timezone.now()
+        self.ultima_atualizacao = data_atualizacao
         self.save()
 
     def atualizar(self, data_atualizacao):
         """ Cria os lançamentos de um journal até determinada data. """
         if self.tempo_indeterminado is not True:
-            return
+            raise Exception("Este journal não é do tipo 'tempo indeterminado', logo, não pode ser atualizado.")
         if self.pk is None:
             raise Exception("O journal precisa estar salvo para ser atualizado.")
-        if not isinstance(data_atualizacao, datetime.datetime):
+        if not isinstance(data_atualizacao, datetime.date):
             raise TypeError("Espera-se uma data alvo, do tipo datetime, " +
                             "como argumento para atualização do journal.")
 
@@ -129,15 +132,15 @@ class Journal(models.Model):
         data_lancamento = self.data
         delta_count = 0
 
-        while data_lancamento <= self.ultima_atualizacao:
+        while data_lancamento <= data_atualizacao:
+            if data_lancamento > data_inicial:
+                lancamento = self.criar_lancamento(data_lancamento)
+                lancamento.save()
             delta_count += 1
-            data_lancamento += self.data + self._obter_delta(delta_count)
-            if data_lancamento <= data_inicial:
-                continue
-            lancamento = self.criar_lancamento(data_lancamento)
-            lancamento.save()
-            self.ultima_atualizacao = data_lancamento
-            self.save()
+            data_lancamento = self.data + self._obter_delta(delta_count)
+        
+        self.ultima_atualizacao = data_atualizacao
+        self.save()
 
     def criar_lancamento(self, data_lancamento, num_parcela=0):
         """ Cria um lançamento baseado nos dados de um journal. """
@@ -162,7 +165,6 @@ class Journal(models.Model):
 
     def save(self, *args, **kwargs):
         """ Ao salvar, inicializar o Journal se for o momento da criação. """
-        
         if not self.id:
             super(Journal, self).save(*args, **kwargs)
             self.inicializar()

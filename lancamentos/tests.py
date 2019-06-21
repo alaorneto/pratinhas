@@ -163,7 +163,47 @@ class JournalTestCase(APITestCase):
         self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 1)
 
     def test_criar_journal_periodico(self):
-        pass
+        conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime(2020, 1, 31).date(),
+            "conta_debito": conta.pk,
+            "conta_credito": categoria.pk,
+            "valor": 1000.00,
+            "periodicidade": Journal.MENSAL,
+            "tempo_indeterminado": False,
+            "parcela_inicial": 2,
+            "qtde_parcelas": 5,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+        self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 4)
     
     def test_criar_journal_tempo_indeterminado(self):
-        pass
+        conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime(2020, 1, 31).date(),
+            "conta_debito": conta.pk,
+            "conta_credito": categoria.pk,
+            "valor": 1000.00,
+            "periodicidade": Journal.MENSAL,
+            "tempo_indeterminado": True,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+        self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 1)
+
+        journals = Journal.objects.proprietario(self.user).all()
+        for journal in journals:
+            journal.atualizar(datetime(2021,4,20).date())
+        self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 15)
+
+        journals = Journal.objects.proprietario(self.user).all()
+        for journal in journals:
+            journal.atualizar(datetime(2021,5,31).date())
+        self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 17)

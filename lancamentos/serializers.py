@@ -59,7 +59,7 @@ class JournalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Journal
         fields = ('pk', 'tipo', 'data', 'conta_debito', 'conta_credito',
-                  'valor', 'periodicidade', 'tempo_indeterminado',
+                  'valor', 'periodicidade', 'tempo_indeterminado', 'parcela_inicial',
                   'qtde_parcelas', 'ultima_atualizacao', 'proprietario')
 
 
