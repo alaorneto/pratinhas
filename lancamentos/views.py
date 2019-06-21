@@ -1,4 +1,5 @@
 """ Fornece views para o app de lançamentos. """
+from datetime import datetime
 from django.shortcuts import render
 from rest_framework import status, permissions
 from rest_framework.views import APIView
@@ -55,6 +56,15 @@ class CategoriaViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = CategoriaSerializer
 
+    def create(self, request):
+        data = request.data
+        data['proprietario'] = request.user.pk
+        serializer = CategoriaSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def get_queryset(self):
         return Conta.objects.proprietario(self.request.user).filter(conta_categoria=True)
 
@@ -72,15 +82,17 @@ class LancamentoView(ModelViewSet):
 
     def create(self, request):
         data = request.data
-        data['proprietario'] = request.user
-        serializer = JournalSerializer(data)
+        data['proprietario'] = request.user.pk
+        serializer = JournalSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk):
-        lancamento = Lancamento.objects.proprietario(request.user).get_object_or_404(pk=pk)
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
         journal = lancamento.journal
         lancamento.delete()
         # verificar se foi selecionada a opção para excluir futuros

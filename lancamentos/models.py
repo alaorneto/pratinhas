@@ -1,10 +1,10 @@
 """
 Modelos relacionados aos lançamentos (débitos e créditos).
 """
-import datetime
 from dateutil import relativedelta
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 
 class ProprietarioManager(models.Manager):
@@ -69,9 +69,9 @@ class Journal(models.Model):
         max_length=3, choices=PERIODICIDADE_CHOICES, default=UNICO
     )
     tempo_indeterminado = models.BooleanField()
-    parcela_inicial = models.IntegerField()
-    qtde_parcelas = models.IntegerField()
-    ultima_atualizacao = models.DateTimeField()
+    parcela_inicial = models.IntegerField(null=True)
+    qtde_parcelas = models.IntegerField(null=True)
+    ultima_atualizacao = models.DateTimeField(null=True)
     proprietario = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
@@ -89,11 +89,12 @@ class Journal(models.Model):
 
     def inicializar(self):
         """ Cria os lançamentos de um determinado journal. """
+        
         if self.ultima_atualizacao:
             raise Exception("O journal já foi inicializado anteriormente.")
-
+        
         # O journal possui repetição de lançamentos (periodicidade)
-        if self.tempo_indeterminado is not False and self.periodicidade != Journal.UNICO:
+        if self.tempo_indeterminado is False and self.periodicidade != Journal.UNICO:
             num_parcela = self.parcela_inicial
             data_lancamento = self.data
             while num_parcela <= self.qtde_parcelas:
@@ -104,11 +105,14 @@ class Journal(models.Model):
                     num_parcela - self.parcela_inicial)
 
         # O journal possui apenas um lançamento (único)
-        if self.tempo_indeterminado is not False and self.periodicidade == Journal.UNICO:
+        if self.tempo_indeterminado is False and self.periodicidade == Journal.UNICO:
             lancamento = self.criar_lancamento(self.data)
             lancamento.save()
 
-        self.ultima_atualizacao = datetime.datetime.now()
+        if self.tempo_indeterminado:
+            raise NotImplementedError
+
+        self.ultima_atualizacao = timezone.now()
         self.save()
 
     def atualizar(self, data_atualizacao):
@@ -155,6 +159,15 @@ class Journal(models.Model):
             return relativedelta.relativedelta(years=+delta)
         else:
             return relativedelta.relativedelta(days=0)
+
+    def save(self, *args, **kwargs):
+        """ Ao salvar, inicializar o Journal se for o momento da criação. """
+        
+        if not self.id:
+            super(Journal, self).save(*args, **kwargs)
+            self.inicializar()
+        else:
+            return super(Journal, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "journal"

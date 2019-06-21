@@ -1,7 +1,7 @@
 """ Testes do módulo lançamentos. """
 from datetime import datetime
 from django.contrib.auth.models import User
-from lancamentos.models import Conta
+from lancamentos.models import Conta, Journal, Lancamento
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
@@ -72,3 +72,98 @@ class ContaTestCase(APITestCase):
         }
         response = client_sem_autenticacao.post("/api/core/contas/", conta, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+class CategoriaTestCase(APITestCase):
+    """ Testes de operações com contas. """
+    client = None
+    user = None
+    username = 'test'
+    email = 'test@pratinhas.app'
+    password = 'Test1234!'
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(self.username, self.email, self.password)
+        token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+    def test_criar_categorias(self):
+        alimentacao = {
+            "nome": "Alimentação",
+        }
+        response = self.client.post("/api/core/categorias/", alimentacao, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        vestuario = {
+            "nome": "Vestuário",
+        }
+        response = self.client.post("/api/core/categorias/", vestuario, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        self.assertEqual(Conta.objects.proprietario(self.user).filter(conta_categoria=True).count(), 2)
+
+class JournalTestCase(APITestCase):
+    """ Testes de operações com contas. """
+    client = None
+    user = None
+    username = 'test'
+    email = 'test@pratinhas.app'
+    password = 'Test1234!'
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(self.username, self.email, self.password)
+        token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+                
+        bb = {
+            "data_inicial": datetime.now().date(),
+            "saldo_inicial": 0.0,
+            "nome": "Banco do Brasil",
+        }
+        response = self.client.post("/api/core/contas/", bb, format='json')
+
+        cef = {
+            "data_inicial": datetime.now().date(),
+            "saldo_inicial": 155.0,
+            "nome": "Caixa Econômica Federal",
+        }
+        response = self.client.post("/api/core/contas/", cef, format='json')
+
+        alimentacao = {
+            "nome": "Alimentação",
+        }
+        response = self.client.post("/api/core/categorias/", alimentacao, format='json')
+
+        vestuario = {
+            "nome": "Vestuário",
+        }
+        response = self.client.post("/api/core/categorias/", vestuario, format='json')
+
+        self.assertEqual(Conta.objects.proprietario(self.user).filter(conta_categoria=False).count(), 2)
+        self.assertEqual(Conta.objects.proprietario(self.user).filter(conta_categoria=True).count(), 2)
+    
+    def test_criar_journal_unico(self):
+        conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime.now().date(),
+            "conta_debito": conta.pk,
+            "conta_credito": categoria.pk,
+            "valor": 1000.00,
+            "periodicidade": Journal.UNICO,
+            "tempo_indeterminado": False,
+            "parcela_inicial": 0,
+            "qtde_parcelas": 0,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+        self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 1)
+
+    def test_criar_journal_periodico(self):
+        pass
+    
+    def test_criar_journal_tempo_indeterminado(self):
+        pass

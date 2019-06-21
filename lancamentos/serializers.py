@@ -36,7 +36,7 @@ class ContaSerializer(serializers.ModelSerializer):
         fields = ('pk', 'data_inicial', 'saldo_inicial', 'nome', 'proprietario')
 
 
-class CategoriaSerializer(serializers.HyperlinkedModelSerializer):
+class CategoriaSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if 'data_inicial' in data:
             raise serializers.ValidationError("Uma categoria não deve ter data inicial.")
@@ -55,7 +55,7 @@ class CategoriaSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('nome', 'proprietario')
 
 
-class JournalSerializer(serializers.HyperlinkedModelSerializer):
+class JournalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Journal
         fields = ('pk', 'tipo', 'data', 'conta_debito', 'conta_credito',
