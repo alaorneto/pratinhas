@@ -93,10 +93,18 @@ class LancamentoView(ModelViewSet):
 
     def destroy(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
+        data = lancamento.data
         journal = lancamento.journal
         lancamento.delete()
-        # verificar se foi selecionada a opção para excluir futuros
-        excluir_journal(journal)
+
+        if request.data.get("futuros"):
+            Lancamento.objects.proprietario(request.user).filter(journal=journal.pk).filter(data__gt=data).delete()
+
+        if not journal.tempo_indeterminado:
+            if Lancamento.objects.proprietario(request.user).filter(journal=journal.pk).count() == 0:
+                journal.delete()
+                
+        return Response(status=status.HTTP_200_OK)
 
     def get_queryset(self):
         return Lancamento.objects.proprietario(self.request.user)

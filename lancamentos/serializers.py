@@ -63,8 +63,7 @@ class JournalSerializer(serializers.ModelSerializer):
                   'qtde_parcelas', 'ultima_atualizacao', 'proprietario')
 
 
-class LancamentoSerializer(serializers.PrimaryKeyRelatedField):
-    atualiza_futuros = serializers.BooleanField()
+class LancamentoSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         pass
@@ -72,4 +71,4 @@ class LancamentoSerializer(serializers.PrimaryKeyRelatedField):
     class Meta:
         model = Lancamento
         fields = ('journal', 'data', 'conta_debito', 'conta_credito', 'valor',
-                  'num_parcela', 'proprietario', 'atualiza_futuros')
+                  'num_parcela', 'proprietario')

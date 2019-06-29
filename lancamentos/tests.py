@@ -6,6 +6,8 @@ from lancamentos.models import Conta, Journal, Lancamento
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
+from rest_framework.renderers import JSONRenderer
+from .serializers import LancamentoSerializer
 
 class ContaTestCase(APITestCase):
     """ Testes de operações com contas. """
@@ -210,7 +212,34 @@ class LancamentoTestCase(APITestCase):
         self.assertEqual(Lancamento.objects.proprietario(self.user).count(), 17)
     
     def test_alterar_valor_lancamento(self):
-        pass
+        conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime(2020, 2, 20).date(),
+            "conta_debito": conta.pk,
+            "conta_credito": categoria.pk,
+            "valor": 5000.00,
+            "periodicidade": Journal.MENSAL,
+            "tempo_indeterminado": True,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+
+        journals = Journal.objects.proprietario(self.user).all()
+        for journal in journals:
+            journal.atualizar(datetime(2021,4,30).date())
+        
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 5, 20).date())
+        self.assertEqual(lancamento.valor, 5000)
+        lancamento.valor = 533.33
+        serializer = LancamentoSerializer(lancamento)
+        json = JSONRenderer().render(serializer.data)
+        response = self.client.put("/api/core/lancamentos/", json, format='json')
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 5, 20).date())
+        self.assertNotEqual(lancamento.valor, 5000)
+
     
     def test_alterar_valor_lancamento_e_futuros(self):
         pass
@@ -230,7 +259,5 @@ class LancamentoTestCase(APITestCase):
         response = self.client.post("/api/core/lancamentos/", journal, format='json')
         lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), valor=1012.21)
         self.assertEqual(Lancamento.objects.proprietario(self.user).filter(valor=1012.21).count(), 1)
-        print(lancamento.pk)
         response = self.client.delete(f"/api/core/lancamentos/{lancamento.pk}/")
-        
         self.assertEqual(Lancamento.objects.proprietario(self.user).filter(valor=1012.21).count(), 0)
