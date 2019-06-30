@@ -91,6 +91,12 @@ class LancamentoView(ModelViewSet):
             print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def update(self, request, pk=None):
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
+        json = request.data
+        print(json.valor)
+
+
     def destroy(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
         data = lancamento.data

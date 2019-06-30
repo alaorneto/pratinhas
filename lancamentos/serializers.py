@@ -66,7 +66,11 @@ class JournalSerializer(serializers.ModelSerializer):
 class LancamentoSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
-        pass
+        instance.data = validated_data.get('data', instance.data)
+        instance.conta_debito = validated_data.get('conta_debito', instance.conta_debito)
+        instance.conta_credito = validated_data.get('conta_credito', instance.conta_credito)
+        instance.valor = validated_data.get('valor', instance.valor)
+        return instance
 
     class Meta:
         model = Lancamento

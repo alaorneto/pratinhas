@@ -236,7 +236,7 @@ class LancamentoTestCase(APITestCase):
         lancamento.valor = 533.33
         serializer = LancamentoSerializer(lancamento)
         json = JSONRenderer().render(serializer.data)
-        response = self.client.put("/api/core/lancamentos/", json, format='json')
+        response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", json, format='json')
         lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 5, 20).date())
         self.assertNotEqual(lancamento.valor, 5000)
 
