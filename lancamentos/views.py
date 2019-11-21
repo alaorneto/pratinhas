@@ -73,7 +73,7 @@ class ExtratoView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def list(self, request, mes, ano):
-        criar_lancamentos(request.user, mes, ano)
+        atualizar_journals(request.user, mes, ano)
         return Response()
 
 
@@ -95,7 +95,6 @@ class LancamentoView(ModelViewSet):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
         json = request.data
         print(json.valor)
-
 
     def destroy(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)

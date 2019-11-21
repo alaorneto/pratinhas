@@ -88,7 +88,7 @@ class Journal(models.Model):
         else:
             return None
 
-    def inicializar(self):
+    def _inicializar(self):
         """ Cria os lançamentos de um determinado journal. """
         
         if self.ultima_atualizacao:
@@ -101,7 +101,7 @@ class Journal(models.Model):
             num_parcela = self.parcela_inicial
             data_lancamento = self.data
             while num_parcela <= self.qtde_parcelas:
-                lancamento = self.criar_lancamento(data_lancamento, num_parcela)
+                lancamento = self._criar_lancamento(data_lancamento, num_parcela)
                 lancamento.save()
                 num_parcela += 1
                 data_lancamento = self.data + self._obter_delta(
@@ -111,7 +111,7 @@ class Journal(models.Model):
 
         # O journal possui apenas um lançamento (único)
         if (self.tempo_indeterminado is False and self.periodicidade == Journal.UNICO) or (self.tempo_indeterminado):
-            lancamento = self.criar_lancamento(self.data)
+            lancamento = self._criar_lancamento(self.data)
             lancamento.save()
             data_atualizacao = self.data
 
@@ -134,7 +134,7 @@ class Journal(models.Model):
 
         while data_lancamento <= data_atualizacao:
             if data_lancamento > data_inicial:
-                lancamento = self.criar_lancamento(data_lancamento)
+                lancamento = self._criar_lancamento(data_lancamento)
                 lancamento.save()
             delta_count += 1
             data_lancamento = self.data + self._obter_delta(delta_count)
@@ -142,7 +142,7 @@ class Journal(models.Model):
         self.ultima_atualizacao = data_atualizacao
         self.save()
 
-    def criar_lancamento(self, data_lancamento, num_parcela=0):
+    def _criar_lancamento(self, data_lancamento, num_parcela=0):
         """ Cria um lançamento baseado nos dados de um journal. """
         lancamento = Lancamento(journal=self,
                                 data=data_lancamento,
@@ -167,7 +167,7 @@ class Journal(models.Model):
         """ Ao salvar, inicializar o Journal se for o momento da criação. """
         if not self.id:
             super(Journal, self).save(*args, **kwargs)
-            self.inicializar()
+            self._inicializar()
         else:
             return super(Journal, self).save(*args, **kwargs)
 
