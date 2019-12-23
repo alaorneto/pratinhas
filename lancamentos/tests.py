@@ -1,13 +1,17 @@
 """ Testes do módulo lançamentos. """
 from datetime import datetime
+from decimal import Decimal
+
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
-from lancamentos.models import Conta, Journal, Lancamento
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.renderers import JSONRenderer
+
+from lancamentos.models import Conta, Journal, Lancamento
 from .serializers import LancamentoSerializer
+
 
 class ContaTestCase(APITestCase):
     """ Testes de operações com contas. """
@@ -75,7 +79,8 @@ class ContaTestCase(APITestCase):
         }
         response = client_sem_autenticacao.post("/api/core/contas/", conta, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
+
 class CategoriaTestCase(APITestCase):
     """ Testes de operações com contas. """
     client = None
@@ -104,6 +109,7 @@ class CategoriaTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.assertEqual(Conta.objects.proprietario(self.user).filter(conta_categoria=True).count(), 2)
+
 
 class LancamentoTestCase(APITestCase):
     """ Testes de operações com contas. """
@@ -231,17 +237,22 @@ class LancamentoTestCase(APITestCase):
         for journal in journals:
             journal.atualizar(datetime(2021,4,30).date())
         
-        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 5, 20).date())
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 2, 20).date())
         self.assertEqual(lancamento.valor, 5000)
         lancamento.valor = 533.33
         serializer = LancamentoSerializer(lancamento)
-        json = JSONRenderer().render(serializer.data)
-        response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", json, format='json')
-        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 5, 20).date())
+        response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", serializer.data, format='json')
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 2, 20).date())
         self.assertNotEqual(lancamento.valor, 5000)
 
     
     def test_alterar_valor_lancamento_e_futuros(self):
+        pass
+
+    def test_alterar_conta_lancamento(self):
+        pass
+
+    def test_alterar_conta_lancamento_e_futuros(self):
         pass
     
     def test_excluir_lancamento_unico(self):

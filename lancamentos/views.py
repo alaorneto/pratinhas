@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Conta, Journal, Lancamento
 from .serializers import JournalSerializer, LancamentoSerializer
 from .serializers import ContaSerializer, CategoriaSerializer, UsuarioSerializer
-from .services import criar_lancamentos, atualizar_journals, excluir_journal
+from .services import atualizar_journals, excluir_journal
 
 
 def index(request):
@@ -94,7 +94,12 @@ class LancamentoView(ModelViewSet):
     def update(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
         json = request.data
-        print(json.valor)
+        serializer = LancamentoSerializer(lancamento, json)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
