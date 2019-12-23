@@ -250,7 +250,33 @@ class LancamentoTestCase(APITestCase):
         pass
 
     def test_alterar_conta_lancamento(self):
-        pass
+        conta_bb = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        conta_cef = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Caixa Econômica Federal")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime(2020, 2, 20).date(),
+            "conta_debito": conta_bb.pk,
+            "conta_credito": categoria.pk,
+            "valor": 5000.00,
+            "periodicidade": Journal.MENSAL,
+            "tempo_indeterminado": True,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+
+        journals = Journal.objects.proprietario(self.user).all()
+        for journal in journals:
+            journal.atualizar(datetime(2021,4,30).date())
+        
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 2, 20).date())
+        self.assertEqual(lancamento.conta_debito.nome, 'Banco do Brasil')
+        lancamento.conta_debito = conta_cef
+        serializer = LancamentoSerializer(lancamento)
+        response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", serializer.data, format='json')
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 2, 20).date())
+        self.assertNotEqual(lancamento.conta_debito.nome, 'Banco do Brasil')
 
     def test_alterar_conta_lancamento_e_futuros(self):
         pass
