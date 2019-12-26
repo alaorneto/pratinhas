@@ -105,3 +105,10 @@ venv.bak/
 
 # IDE
 .vscode/
+
+# Node JS
+node_modules/
+
+# Semantic
+
+client/semantic/
