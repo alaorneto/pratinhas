@@ -247,7 +247,37 @@ class LancamentoTestCase(APITestCase):
 
     
     def test_alterar_valor_lancamento_e_futuros(self):
-        pass
+        conta_bb = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime(2020, 2, 20).date(),
+            "conta_debito": conta_bb.pk,
+            "conta_credito": categoria.pk,
+            "valor": 5000.00,
+            "periodicidade": Journal.MENSAL,
+            "tempo_indeterminado": True,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+
+        journals = Journal.objects.proprietario(self.user).all()
+        for journal in journals:
+            journal.atualizar(datetime(2021,4,30).date())
+        
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 2, 20).date())
+        journal_id = lancamento.journal_id
+        self.assertEqual(lancamento.conta_debito.nome, 'Banco do Brasil')
+        lancamento.valor = 355.78
+        serializer = LancamentoSerializer(lancamento)
+        data = serializer.data
+        data['futuros'] = True
+        response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", data, format='json')
+        lancamentos = Lancamento.objects.proprietario(self.user).filter(journal_id=journal_id)
+        
+        for lancamento in lancamentos:
+            self.assertNotEqual(lancamento.valor, 5000.00)
 
     def test_alterar_conta_lancamento(self):
         conta_bb = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
@@ -279,7 +309,38 @@ class LancamentoTestCase(APITestCase):
         self.assertNotEqual(lancamento.conta_debito.nome, 'Banco do Brasil')
 
     def test_alterar_conta_lancamento_e_futuros(self):
-        pass
+        conta_bb = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")
+        conta_cef = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Caixa Econômica Federal")
+        categoria = Conta.objects.proprietario(self.user).filter(conta_categoria=True).get(nome="Alimentação")
+        journal = {
+            "tipo": Journal.CREDITO,
+            "data": datetime(2020, 2, 20).date(),
+            "conta_debito": conta_bb.pk,
+            "conta_credito": categoria.pk,
+            "valor": 5000.00,
+            "periodicidade": Journal.MENSAL,
+            "tempo_indeterminado": True,
+        }
+        response = self.client.post("/api/core/lancamentos/", journal, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Journal.objects.proprietario(self.user).count(), 1)
+
+        journals = Journal.objects.proprietario(self.user).all()
+        for journal in journals:
+            journal.atualizar(datetime(2021,4,30).date())
+        
+        lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 2, 20).date())
+        journal_id = lancamento.journal_id
+        self.assertEqual(lancamento.conta_debito.nome, 'Banco do Brasil')
+        lancamento.conta_debito = conta_cef
+        serializer = LancamentoSerializer(lancamento)
+        data = serializer.data
+        data['futuros'] = True
+        response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", data, format='json')
+        lancamentos = Lancamento.objects.proprietario(self.user).filter(journal_id=journal_id)
+        
+        for lancamento in lancamentos:
+            self.assertNotEqual(lancamento.conta_debito.nome, 'Banco do Brasil')
     
     def test_excluir_lancamento_unico(self):
         conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")

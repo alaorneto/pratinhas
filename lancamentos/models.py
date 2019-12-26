@@ -65,6 +65,7 @@ class Journal(models.Model):
                                      on_delete=models.CASCADE)
     conta_credito = models.ForeignKey(Conta, related_name='journal_creditos',
                                       on_delete=models.CASCADE)
+    descricao = models.TextField(max_length=250)
     valor = models.DecimalField(max_digits=9, decimal_places=2)
     periodicidade = models.CharField(
         max_length=3, choices=PERIODICIDADE_CHOICES, default=UNICO
@@ -194,6 +195,7 @@ class Lancamento(models.Model):
         Conta, related_name='debitos', on_delete=models.CASCADE)
     conta_credito = models.ForeignKey(
         Conta, related_name='creditos', on_delete=models.CASCADE)
+    descricao = models.TextField(max_length=250)
     valor = models.DecimalField(max_digits=9, decimal_places=2)
     num_parcela = models.IntegerField()
     proprietario = models.ForeignKey(
