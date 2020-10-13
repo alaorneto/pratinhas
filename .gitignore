@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# IDE
+.vscode/
+
+# Node JS
+node_modules/
+
+# Semantic
+
+client/semantic/

@@ -72,8 +72,10 @@ class LancamentoSerializer(serializers.ModelSerializer):
         instance.valor = validated_data.get('valor', instance.valor)
         instance.save()
         return instance
+    
+    def get_data(self):
+        return self.data
 
     class Meta:
         model = Lancamento
-        fields = ('pk', 'journal', 'data', 'conta_debito', 'conta_credito', 'valor',
-                  'num_parcela', 'proprietario')
+        fields = ('journal', 'data', 'conta_debito', 'conta_credito', 'valor', 'num_parcela', 'proprietario')
