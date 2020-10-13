@@ -237,12 +237,12 @@ class LancamentoTestCase(APITestCase):
         serializer = LancamentoSerializer(lancamento)
         json = JSONRenderer().render(serializer.data)
         response = self.client.put(f"/api/core/lancamentos/{lancamento.pk}/", json, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         lancamento = get_object_or_404(Lancamento.objects.proprietario(self.user), data=datetime(2020, 5, 20).date())
         self.assertNotEqual(lancamento.valor, 5000)
 
-    
     def test_alterar_valor_lancamento_e_futuros(self):
-        pass
+        self.assertTrue(False)
     
     def test_excluir_lancamento_unico(self):
         conta = Conta.objects.proprietario(self.user).filter(conta_categoria=False).get(nome="Banco do Brasil")

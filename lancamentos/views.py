@@ -1,4 +1,5 @@
 """ Fornece views para o app de lançamentos. """
+import json
 from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from rest_framework import status, permissions
@@ -6,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import JSONParser
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .models import Conta, Journal, Lancamento
@@ -93,9 +95,12 @@ class LancamentoView(ModelViewSet):
 
     def update(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
-        json = request.data
-        print(json.valor)
-
+        data = json.loads(request.data)
+        serializer = LancamentoSerializer(lancamento, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
