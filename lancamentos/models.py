@@ -4,8 +4,7 @@ Modelos relacionados aos lançamentos (débitos e créditos).
 import datetime
 from dateutil import relativedelta
 from django.db import models
-from django.contrib.auth import get_user_model
-from django.utils import timezone
+from django.conf import settings
 
 
 class ProprietarioManager(models.Manager):
@@ -23,7 +22,7 @@ class Conta(models.Model):
     nome = models.CharField(max_length=100)
     conta_categoria = models.BooleanField()
     proprietario = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
     objects = ProprietarioManager()
@@ -32,6 +31,7 @@ class Conta(models.Model):
         return self.nome
 
     class Meta:
+        app_label = 'lancamentos'
         verbose_name = "conta"
         verbose_name_plural = "contas"
         unique_together = ['nome', 'proprietario']
@@ -75,7 +75,7 @@ class Journal(models.Model):
     qtde_parcelas = models.IntegerField(null=True)
     ultima_atualizacao = models.DateField(null=True)
     proprietario = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
     objects = ProprietarioManager()
@@ -91,10 +91,10 @@ class Journal(models.Model):
 
     def _inicializar(self):
         """ Cria os lançamentos de um determinado journal. """
-        
+
         if self.ultima_atualizacao:
             raise Exception("O journal já foi inicializado anteriormente.")
-        
+
         data_atualizacao = datetime.datetime.now().date()
 
         # O journal possui repetição de lançamentos (periodicidade)
@@ -108,7 +108,7 @@ class Journal(models.Model):
                 data_lancamento = self.data + self._obter_delta(
                     num_parcela - self.parcela_inicial)
             data_atualizacao = data_lancamento
-                
+
 
         # O journal possui apenas um lançamento (único)
         if (self.tempo_indeterminado is False and self.periodicidade == Journal.UNICO) or (self.tempo_indeterminado):
@@ -139,7 +139,7 @@ class Journal(models.Model):
                 lancamento.save()
             delta_count += 1
             data_lancamento = self.data + self._obter_delta(delta_count)
-        
+
         self.ultima_atualizacao = data_atualizacao
         self.save()
 
@@ -173,6 +173,7 @@ class Journal(models.Model):
             return super(Journal, self).save(*args, **kwargs)
 
     class Meta:
+        app_label = 'lancamentos'
         verbose_name = "journal"
         verbose_name_plural = "journals"
 
@@ -199,7 +200,7 @@ class Lancamento(models.Model):
     valor = models.DecimalField(max_digits=9, decimal_places=2)
     num_parcela = models.IntegerField()
     proprietario = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
     objects = ProprietarioManager()
@@ -209,5 +210,6 @@ class Lancamento(models.Model):
         return self.journal.categoria()
 
     class Meta:
+        app_label = 'lancamentos'
         verbose_name = "lançamento"
         verbose_name_plural = "lançamentos"

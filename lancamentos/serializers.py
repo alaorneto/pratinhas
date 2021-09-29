@@ -1,14 +1,7 @@
 """ Serializers do módulo de lançamentos. """
 import numbers
-from django.contrib.auth.models import User
 from .models import Conta, Journal, Lancamento
 from rest_framework import serializers
-
-
-class UsuarioSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'is_staff')
 
 
 class ContaSerializer(serializers.ModelSerializer):

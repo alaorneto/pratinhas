@@ -25,7 +25,7 @@ SECRET_KEY = '(9bswgmpws5^(3$52@o8&+6*onkmq^gu00t7pceyc(1oz+1!5i'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1',]
 
 
 # Application definition
@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'lancamentos'
+    'lancamentos.apps.LancamentosConfig',
 ]
 
 MIDDLEWARE = [
@@ -83,7 +83,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
@@ -116,6 +115,8 @@ USE_L10N = True
 
 USE_TZ = True
 
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/

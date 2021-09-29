@@ -15,7 +15,7 @@ from dateutil import relativedelta
 
 from .models import Conta, Journal, Lancamento
 from .serializers import JournalSerializer, LancamentoSerializer
-from .serializers import ContaSerializer, CategoriaSerializer, UsuarioSerializer
+from .serializers import ContaSerializer, CategoriaSerializer
 from .services import atualizar_journals, excluir_journal
 
 
@@ -32,12 +32,6 @@ def painel(request):
 def extrato(request):
     """ Exibe o extrato do usuário. """
     return render(request, "lancamentos/extrato.html")
-
-
-class UsuarioViewSet(ModelViewSet):
-    permission_classes = (IsAuthenticated,)
-    queryset = User.objects.all()
-    serializer_class = UsuarioSerializer
 
 
 class ContaViewSet(ModelViewSet):
