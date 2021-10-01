@@ -10,8 +10,8 @@ router.register('categorias', CategoriaViewSet, basename='categoria')
 router.register('lancamentos', LancamentoView, basename='lancamento')
 
 urlpatterns = [
-    path('extrato/', extrato),
-    path('painel/', painel),
-    path('extrato/<int:mes>/<int:ano>/', ExtratoView.as_view()),
-    path('', index),
+    path('extrato', extrato),
+    path('painel', painel),
+    path('extrato/<int:mes>/<int:ano>', ExtratoView.as_view()),
+    path('', include(router.urls)),
 ]
