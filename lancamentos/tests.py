@@ -22,16 +22,21 @@ class ContaTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(self.username, self.email, self.password)
-        token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        payload = {
+            "username": self.username,
+            "password": self.password
+        }
+        response = self.client.post("/api/token/", payload, format='json')
+        token = response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
 
     def test_criar_contas(self):
-        bb = {
+        banco_brasil = {
             "data_inicial": datetime.now().date(),
             "saldo_inicial": 0.0,
             "nome": "Banco do Brasil",
         }
-        response = self.client.post("/api/core/contas/", bb, format='json')
+        response = self.client.post("/api/core/contas/", banco_brasil, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         cef = {
@@ -90,8 +95,13 @@ class CategoriaTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(self.username, self.email, self.password)
-        token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        payload = {
+            "username": self.username,
+            "password": self.password
+        }
+        response = self.client.post("/api/token/", payload, format='json')
+        token = response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
 
     def test_criar_categorias(self):
         alimentacao = {
@@ -120,8 +130,13 @@ class LancamentoTestCase(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(self.username, self.email, self.password)
-        token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        payload = {
+            "username": self.username,
+            "password": self.password
+        }
+        response = self.client.post("/api/token/", payload, format='json')
+        token = response.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
 
         bb = {
             "data_inicial": datetime.now().date(),

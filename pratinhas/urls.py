@@ -17,9 +17,13 @@ from django.contrib import admin
 from django.conf.urls import url
 from django.urls import include, path
 from rest_framework import routers
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from accounts.views import CustomObtainPairView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/core/', include('lancamentos.urls')),
+    path('api/token/', CustomObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]

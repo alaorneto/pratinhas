@@ -9,7 +9,6 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from dateutil import relativedelta
 
@@ -94,8 +93,8 @@ class LancamentoView(ModelViewSet):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
         data_original = lancamento.data
         
-        json = request.data
-        serializer = LancamentoSerializer(lancamento, json)
+        payload = request.data
+        serializer = LancamentoSerializer(lancamento, payload)
         
         if serializer.is_valid():
             serializer.save()
