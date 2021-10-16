@@ -28,7 +28,7 @@ class ContaTestCase(APITestCase):
         }
         response = self.client.post("/api/token/", payload, format='json')
         token = response.data["access"]
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
 
     def test_criar_contas(self):
         banco_brasil = {

@@ -2,8 +2,11 @@
 Modelos relacionados aos lançamentos (débitos e créditos).
 """
 import datetime
+from decimal import Decimal
 from dateutil import relativedelta
 from django.db import models
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
 from django.conf import settings
 
 
@@ -26,6 +29,19 @@ class Conta(models.Model):
         on_delete=models.CASCADE,
     )
     objects = ProprietarioManager()
+
+    @property
+    def saldo_atual(self):
+        data_atual = datetime.datetime.now().date()
+        creditos = Lancamento.objects.filter(conta_credito__nome=self.nome, conta_credito__proprietario=self.proprietario, data__lte=data_atual).aggregate(sum_credito=Coalesce(Sum('valor'), Decimal(0)))
+        debitos = Lancamento.objects.filter(conta_debito__nome=self.nome, conta_debito__proprietario=self.proprietario, data__lte=data_atual).aggregate(sum_debito=Coalesce(Sum('valor'), Decimal(0)))
+
+        print(creditos)
+        print(debitos)
+
+        saldo_atual = self.saldo_inicial + creditos['sum_credito'] - debitos['sum_debito']
+
+        return saldo_atual
 
     def __str__(self):
         return self.nome

@@ -5,6 +5,8 @@ from rest_framework import serializers
 
 
 class ContaSerializer(serializers.ModelSerializer):
+    saldo_atual = serializers.ReadOnlyField()
+    
     def validate(self, data):
         if 'data_inicial' in data:
             if not data['data_inicial']:
@@ -26,7 +28,7 @@ class ContaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conta
-        fields = ('pk', 'data_inicial', 'saldo_inicial', 'nome', 'proprietario')
+        fields = ('pk', 'data_inicial', 'saldo_inicial', 'saldo_atual', 'nome')
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -45,7 +47,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Conta
-        fields = ('nome', 'proprietario')
+        fields = ('pk', 'nome')
 
 
 class JournalSerializer(serializers.ModelSerializer):
@@ -53,7 +55,7 @@ class JournalSerializer(serializers.ModelSerializer):
         model = Journal
         fields = ('pk', 'tipo', 'data', 'conta_debito', 'conta_credito',
                   'valor', 'periodicidade', 'tempo_indeterminado', 'parcela_inicial',
-                  'qtde_parcelas', 'ultima_atualizacao', 'proprietario')
+                  'qtde_parcelas', 'ultima_atualizacao')
 
 
 class LancamentoSerializer(serializers.ModelSerializer):
@@ -71,4 +73,4 @@ class LancamentoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lancamento
-        fields = ('journal', 'data', 'conta_debito', 'conta_credito', 'valor', 'num_parcela', 'proprietario')
+        fields = ('pk', 'journal', 'data', 'conta_debito', 'conta_credito', 'valor', 'num_parcela')

@@ -92,18 +92,18 @@ class LancamentoView(ModelViewSet):
     def update(self, request, pk=None):
         lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
         data_original = lancamento.data
-        
+
         payload = request.data
         serializer = LancamentoSerializer(lancamento, payload)
-        
+
         if serializer.is_valid():
             serializer.save()
 
             lancamento = get_object_or_404(Lancamento.objects.proprietario(request.user), pk=pk)
             futuros = Lancamento.objects.proprietario(request.user).filter(data__gt=lancamento.data)
-            
+
             data_delta = relativedelta.relativedelta(data_original, lancamento.data)
-            
+
             # Atualizar o journal
             journal = lancamento.journal
             journal.conta_debito = lancamento.conta_debito
@@ -144,10 +144,10 @@ class LancamentoView(ModelViewSet):
                 journal.save()
 
         # Caso não haja mais lançamentos para o journal, ele pode
-        # ser excluído do banco de dados.    
+        # ser excluído do banco de dados.
         if Lancamento.objects.proprietario(request.user).filter(journal=journal.pk).count() == 0:
             journal.delete()
-                
+
         return Response(status=status.HTTP_200_OK)
 
     def get_queryset(self):
