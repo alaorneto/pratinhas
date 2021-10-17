@@ -36,8 +36,14 @@ class Conta(models.Model):
         creditos = Lancamento.objects.filter(conta_credito__nome=self.nome, conta_credito__proprietario=self.proprietario, data__lte=data_atual).aggregate(sum_credito=Coalesce(Sum('valor'), Decimal(0)))
         debitos = Lancamento.objects.filter(conta_debito__nome=self.nome, conta_debito__proprietario=self.proprietario, data__lte=data_atual).aggregate(sum_debito=Coalesce(Sum('valor'), Decimal(0)))
 
-        print(creditos)
-        print(debitos)
+        saldo_atual = self.saldo_inicial + creditos['sum_credito'] - debitos['sum_debito']
+
+        return saldo_atual
+    
+
+    def saldo_em(self, data_alvo):
+        creditos = Lancamento.objects.filter(conta_credito__nome=self.nome, conta_credito__proprietario=self.proprietario, data__lte=data_alvo).aggregate(sum_credito=Coalesce(Sum('valor'), Decimal(0)))
+        debitos = Lancamento.objects.filter(conta_debito__nome=self.nome, conta_debito__proprietario=self.proprietario, data__lte=data_alvo).aggregate(sum_debito=Coalesce(Sum('valor'), Decimal(0)))
 
         saldo_atual = self.saldo_inicial + creditos['sum_credito'] - debitos['sum_debito']
 

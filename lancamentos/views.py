@@ -1,18 +1,19 @@
 """ Fornece views para o app de lançamentos. """
-import json
-from datetime import datetime
+import calendar
+import datetime
+from decimal import Decimal
+from dateutil import relativedelta
 
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import JSONParser
-from django.contrib.auth.decorators import login_required
-from dateutil import relativedelta
 
-from .models import Conta, Journal, Lancamento
+from .models import Conta, Lancamento
 from .serializers import JournalSerializer, LancamentoSerializer
 from .serializers import ContaSerializer, CategoriaSerializer
 from .services import atualizar_journals, excluir_journal
@@ -70,9 +71,86 @@ class CategoriaViewSet(ModelViewSet):
 class ExtratoView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def list(self, request, mes, ano):
+    def get(self, request, mes, ano, pk=None):
+
         atualizar_journals(request.user, mes, ano)
-        return Response()
+
+        month_range = calendar.monthrange(ano, mes)
+
+        data_inicial = datetime.date(ano, mes, 1)
+        data_final = datetime.date(ano, mes, month_range[1])
+
+        contas = None
+        lancamentos = None
+
+        if (pk):
+            contas = Conta.objects.proprietario(self.request.user).filter(conta_categoria=False, pk=pk)
+        else:
+            contas = Conta.objects.proprietario(self.request.user).filter(conta_categoria=False)
+
+        itens = []
+        
+        saldo_inicial = Decimal(0.0)
+        saldo_corrente = Decimal(0.0)
+
+        for conta in contas:
+            dia_anterior = data_inicial - datetime.timedelta(days=1)
+            saldo_inicial = saldo_inicial + conta.saldo_em(dia_anterior)
+
+        if (pk):
+            lancamentos = Lancamento.objects.proprietario(self.request.user).filter(Q(data__gte=data_inicial), Q(data__lte=data_final), Q(conta_credito__pk=pk) | Q(conta_debito__pk=pk)).order_by("data")
+        else:
+            lancamentos = Lancamento.objects.proprietario(self.request.user).filter(Q(data__gte=data_inicial), Q(data__lte=data_final)).order_by("data")
+
+        saldo_corrente = saldo_inicial
+
+        for item in lancamentos:  
+            categoria = "Transferência"
+            valor = item.valor
+
+            if (item.journal.tipo == "CRD"):
+                categoria = item.conta_debito.pk
+            if (item.journal.tipo == "DBT"):
+                categoria = item.conta_credito.pk
+
+            if (item.journal.tipo == "DBT"):
+                valor = item.valor * -1
+
+            if (pk):
+                if (item.journal.tipo == "TRF"):
+                    if (item.conta_debito.pk == pk):
+                        saldo_corrente = saldo_corrente + (valor * -1)
+                    else:
+                        saldo_corrente = saldo_corrente + valor
+            
+            if (item.journal.tipo != "TRF"):
+                saldo_corrente = saldo_corrente + valor
+
+            itens.append({
+                "pk": item.pk,
+                "data": item.data,
+                "tipo": item.journal.tipo,
+                "conta_debito": item.conta_debito.pk,
+                "conta_credito": item.conta_credito.pk,
+                "categoria": categoria,
+                "descricao": item.descricao,
+                "valor": valor,
+                "saldo_corrente": saldo_corrente
+            })
+        
+        extrato_itens = {
+            "inicio": {
+                "data_inicial": data_inicial,
+                "saldo_inicial": saldo_inicial
+            },
+            "itens": itens,
+            "fim": {
+                "data_final": data_final,
+                "saldo_final": saldo_corrente
+            }
+        }
+
+        return Response(extrato_itens, status=status.HTTP_200_OK)
 
 
 class LancamentoView(ModelViewSet):

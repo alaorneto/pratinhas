@@ -4,7 +4,6 @@ from datetime import datetime
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
 
 from lancamentos.models import Conta, Journal, Lancamento
@@ -15,8 +14,8 @@ class ContaTestCase(APITestCase):
     """ Testes de operações com contas. """
     client = None
     user = None
-    username = 'test'
-    email = 'test@pratinhas.app'
+    username = 'test5'
+    email = 'test5@pratinhas.app'
     password = 'Test1234!'
 
     def setUp(self):
@@ -88,8 +87,8 @@ class CategoriaTestCase(APITestCase):
     """ Testes de operações com contas. """
     client = None
     user = None
-    username = 'test'
-    email = 'test@pratinhas.app'
+    username = 'test5'
+    email = 'test5@pratinhas.app'
     password = 'Test1234!'
 
     def setUp(self):
@@ -101,7 +100,7 @@ class CategoriaTestCase(APITestCase):
         }
         response = self.client.post("/api/token/", payload, format='json')
         token = response.data["access"]
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
 
     def test_criar_categorias(self):
         alimentacao = {
@@ -123,8 +122,8 @@ class LancamentoTestCase(APITestCase):
     """ Testes de operações com contas. """
     client = None
     user = None
-    username = 'test'
-    email = 'test@pratinhas.app'
+    username = 'test5'
+    email = 'test5@pratinhas.app'
     password = 'Test1234!'
 
     def setUp(self):
@@ -136,7 +135,7 @@ class LancamentoTestCase(APITestCase):
         }
         response = self.client.post("/api/token/", payload, format='json')
         token = response.data["access"]
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
 
         bb = {
             "data_inicial": datetime.now().date(),
